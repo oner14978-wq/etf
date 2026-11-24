@@ -81,8 +81,7 @@ jobs:
       Invoke-WebRequest -UseBasicParsing -Uri "https://downloads.rclone.org/rclone-current-windows-$arch.zip" -OutFile 'C:\pc\rclone.zip'
       Expand-Archive 'C:\pc\rclone.zip' -DestinationPath 'C:\pc\rc' -Force
       Copy-Item (Get-ChildItem 'C:\pc\rc' -Recurse -Filter rclone.exe | Select-Object -First 1).FullName 'C:\pc\rclone.exe'
-      if ($env:CFG_TXT) { [IO.File]::WriteAllText('C:\pc\rclone.conf', ([regex]::Replace(($env:CFG_TXT -replace '\s+', ' ').Trim(), ' (?=\w+ = )', "`n") + "`n")) }
-      else { [IO.File]::WriteAllBytes('C:\pc\rclone.conf', [Convert]::FromBase64String(($env:CFG_B64 -replace '\s', ''))) }
+      if ($env:CFG_TXT) { [IO.File]::WriteAllText('C:\pc\rclone.conf', ([regex]::Replace(($env:CFG_TXT -replace '\s+', ' ').Trim(), ' (?=\w+ = )', "`n") + "`n")) } else { [IO.File]::WriteAllBytes('C:\pc\rclone.conf', [Convert]::FromBase64String(($env:CFG_B64 -replace '\s', ''))) }
       $t = (& 'C:\pc\rclone.exe' --config 'C:\pc\rclone.conf' mkdir $env:REMOTE 2>&1 | Out-String)
       if ($LASTEXITCODE -ne 0) { Write-Error "Salvamento não funciona. Erro: $t Confira o secret RCLONE_CONFIG ([armazenamento])."; exit 1 }
       }
@@ -301,8 +300,7 @@ jobs:
       . 'C:\pc\lib.ps1'
       $mig = [bool]$env:ORIGEM_RUN
       if (-not (Invoke-Restore)) {
-      if ($mig) { Write-Host '::warning::Restauração inicial incompleta; refaço na sincronização final.' }
-      else { Write-Error 'A restauração falhou.'; exit 1 }
+      if ($mig) { Write-Host '::warning::Restauração inicial incompleta; refaço na sincronização final.' } else { Write-Error 'A restauração falhou.'; exit 1 }
       }
       if ($mig) {
       [void](Put-State 'novo_pronto' @{ origem = "$env:ORIGEM_RUN" })
@@ -409,5 +407,4 @@ jobs:
       $b = Rodar-Job 'Invoke-Backup' 'backup'
       Save-BackupInfo $b; $ub = Agora
       Ack $c.id $b 'Backup concluído'
-      } elseif ($c.acao -eq 'desligar') { Encerrar $c.id }
-      else
+      } elseif ($c.acao -eq 'desligar') { Encerrar $c.id } elseif ($c.acao -eq 'm
